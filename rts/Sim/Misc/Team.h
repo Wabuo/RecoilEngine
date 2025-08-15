@@ -24,6 +24,7 @@ public:
 
 	void ResetResourceState();
 	void SlowUpdate();
+	void GameFramePost(int frameNum);
 
 	bool HaveResources(const SResourcePack& amount) const;
 	void AddResources(SResourcePack res, bool useIncomeMultiplier = true);
@@ -73,6 +74,9 @@ public:
 	void AddUnit(CUnit* unit, AddType type);
 	void RemoveUnit(CUnit* unit, RemoveType type);
 
+private:
+	void HandleFrameExcess();
+
 public:
 	int teamNum;
 	unsigned int numUnits; // number of units this team controls
@@ -89,6 +93,7 @@ public:
 	SResourcePack resExpense, resPrevExpense;
 	SResourcePack resShare;
 	SResourcePack resDelayedShare; //< excess that might be shared next SlowUpdate
+	SResourcePack resOverflow; //< accumulates overflow over a gameframe
 	SResourcePack resSent,     resPrevSent;
 	SResourcePack resReceived, resPrevReceived;
 	SResourcePack resPrevExcess;

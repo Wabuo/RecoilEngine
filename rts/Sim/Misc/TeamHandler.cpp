@@ -116,6 +116,12 @@ void CTeamHandler::SetDefaultStartPositions(const CGameSetup* setup)
 void CTeamHandler::GameFrame(int frameNum)
 {
 	RECOIL_DETAILED_TRACY_ZONE;
+
+	for (int a = 0; a < ActiveTeams(); ++a) {
+		// a bit of a callin mismatch but teamHandler runs ~last within a GameFrame anyway
+		teams[a].GameFramePost(frameNum);
+	}
+
 	if ((frameNum % TEAM_SLOWUPDATE_RATE) != 0)
 		return;
 

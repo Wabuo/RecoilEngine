@@ -45,6 +45,7 @@ CR_REG_METADATA(CTeam, (
 	CR_MEMBER(resPrevExpense),
 	CR_MEMBER(resShare),
 	CR_MEMBER(resDelayedShare),
+	CR_MEMBER(resOverflow),
 	CR_MEMBER(resSent),
 	CR_MEMBER(resPrevSent),
 	CR_MEMBER(resReceived),
@@ -156,7 +157,7 @@ void CTeam::AddMetal(float amount, bool useIncomeMultiplier)
 	if (res.metal <= resStorage.metal)
 		return;
 
-	resDelayedShare.metal += (res.metal - resStorage.metal);
+	resOverflow.metal += (res.metal - resStorage.metal);
 	res.metal = resStorage.metal;
 }
 
@@ -170,7 +171,7 @@ void CTeam::AddEnergy(float amount, bool useIncomeMultiplier)
 	resIncome.energy += amount;
 
 	if (res.energy > resStorage.energy) {
-		resDelayedShare.energy += (res.energy - resStorage.energy);
+		resOverflow.energy += (res.energy - resStorage.energy);
 		res.energy = resStorage.energy;
 	}
 }
@@ -196,7 +197,7 @@ void CTeam::AddResources(SResourcePack amount, bool useIncomeMultiplier)
 		if (res[i] <= resStorage[i])
 			continue;
 
-		resDelayedShare[i] += (res[i] - resStorage[i]);
+		resOverflow[i] += (res[i] - resStorage[i]);
 		res[i] = resStorage[i];
 	}
 }
@@ -314,6 +315,32 @@ void CTeam::ResetResourceState()
 	resPrevReceived.metal = resReceived.metal; resReceived.metal = 0.0f;
 	resPrevSent.energy = resSent.energy; resSent.energy = 0.0f;
 	resPrevReceived.energy = resReceived.energy; resReceived.energy = 0.0f;
+}
+
+void CTeam::HandleFrameExcess()
+{
+	/* A team having no excess is also useful information that is a bit annoying
+	 * to detect otherwise, but we make a conservative perf overhead guess.
+	 * Perhaps we will have the leeway to remove this optimisation in the future. */
+	if (resOverflow.empty())
+		return;
+
+	/* Having a metaaccumulator and relegating the "real" native behaviour to
+	 * slowupdate rather than doing it immediately here is mostly for legacy,
+	 * but it's also consistent with how most existing resource mechanics,
+	 * in particular sharing excess to allies aka the red slider, mostly work
+	 * per slowupdate. */
+	if (!eventHandler.TeamResourceExcess(teamNum, resOverflow))
+		resDelayedShare += resOverflow;
+
+	resOverflow = 0.0f;
+}
+
+void CTeam::GameFramePost(int frameNum)
+{
+	/* Excess being accumulated across a frame (rather than called for every resource income
+	 * instance) is for perf, as you can have e.g. tens of thousands of windgens or whatnot. */
+	HandleFrameExcess();
 }
 
 void CTeam::SlowUpdate()
