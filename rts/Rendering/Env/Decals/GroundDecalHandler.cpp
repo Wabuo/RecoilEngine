@@ -276,7 +276,7 @@ void CGroundDecalHandler::AddTexturesFromTable()
 		if (atlasTex->GetAllocator()->contains(mainName)) {
 			maxUniqueScars++
 		} else {
-			LOG_L(L_WARNING, "Failed to load decal %s", mainName);
+			LOG_L(L_WARNING, "Failed to load decal %s", mainTexFileName.c_str());
 		}
 	}
 
