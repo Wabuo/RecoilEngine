@@ -350,7 +350,7 @@ void CUnit::PostInit(const CUnit* builder)
 
 	// done once again in UnitFinished() too
 	// but keep the old behavior for compatibility purposes
-	if (unitDef->windGenerator > 0.0f)
+	if (!unitDef->windGenerator.empty())
 		envResHandler.AddGenerator(this);
 
 	UpdateTerrainType();
@@ -448,7 +448,7 @@ void CUnit::FinishedBuilding(bool postInit)
 	// Sets the frontdir in sync with heading.
 	UpdateDirVectors(!upright && IsOnGround(), false, 0.0f);
 
-	if (unitDef->windGenerator > 0.0f) {
+	if (!unitDef->windGenerator.empty()) {
 		// trigger sending the wind update by removing
 		envResHandler.DelGenerator(this);
 		//  and adding back this windgen
@@ -499,7 +499,7 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, i
 	eventHandler.UnitDestroyed(this, attacker, weaponDefID);
 	eoh->UnitDestroyed(*this, attacker, weaponDefID);
 
-	if (unitDef->windGenerator > 0.0f)
+	if (!unitDef->windGenerator.empty())
 		envResHandler.DelGenerator(this);
 
 	blockHeightChanges = false;
@@ -1079,17 +1079,11 @@ void CUnit::SlowUpdate()
 
 		UseMetal(unitDef->upkeep.metal * 0.5f);
 
-		if (unitDef->windGenerator > 0.0f) {
-			if (envResHandler.GetCurrentWindStrength() > unitDef->windGenerator) {
- 				AddEnergy(unitDef->windGenerator * 0.5f);
-			} else {
-				AddEnergy(envResHandler.GetCurrentWindStrength() * 0.5f);
-			}
-		}
+		AddResources(SResourcePack(envResHandler.GetCurrentWindStrength()).cap_at(unitDef->windGenerator) * 0.5f);
 	}
 
 	// FIXME: tidal part should be under "if (activated)"?
-	AddEnergy((unitDef->tidalGenerator * envResHandler.GetCurrentTidalStrength()) * 0.5f);
+	AddResources(unitDef->tidalGenerator * (envResHandler.GetCurrentTidalStrength() * 0.5f));
 
 
 	if (health < maxHealth) {
@@ -2417,7 +2411,7 @@ void CUnit::UpdateWind(float x, float z, float strength)
 {
 	RECOIL_DETAILED_TRACY_ZONE;
 	const float windHeading = ClampRad(GetHeadingFromVectorF(-x, -z) - heading * TAANG2RAD);
-	const float windStrength = std::min(strength, unitDef->windGenerator);
+	const float windStrength = std::min(strength, std::ranges::max(unitDef->windGenerator));
 
 	script->WindChanged(windHeading, windStrength);
 }
