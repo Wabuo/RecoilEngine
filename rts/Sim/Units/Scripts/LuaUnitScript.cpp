@@ -198,7 +198,7 @@ Spring.UnitScript.Move(number piece, number axis, number destination[, number sp
 	Same as COB's move iff speed is given and not zero, and move-now otherwise.
 
 Spring.UnitScript.Scale(number piece, number destination[, number speed]) -> nil
-	Same as COB's scale iff speed is given and not zero, and move-now otherwise.
+	Same as COB's scale iff speed is given and not zero, and scale-now otherwise.
 
 Spring.UnitScript.IsInTurn(number piece, number axis) -> boolean
 Spring.UnitScript.IsInMove(number piece, number axis) -> boolean
